@@ -1,0 +1,141 @@
+local lastest = 0
+
+local lastdash = {
+	["W"] = 0;
+	["A"] = 0;
+	["S"] = 0;
+	["D"] = 0;
+}
+local plr = game.Players.LocalPlayer
+local speed = 1.5
+local chr = plr.Character or plr.CharacterAdded:Wait()
+local much = require(game.ReplicatedStorage.Modules.MuchachoHitbox)
+
+local cd = false
+
+local anims = {
+	chr.Humanoid.Animator:LoadAnimation(script.Forward); 
+	chr.Humanoid.Animator:LoadAnimation(script.Back); 
+	chr.Humanoid.Animator:LoadAnimation(script.Left); 
+	chr.Humanoid.Animator:LoadAnimation(script.Right); 
+}
+
+local function check()
+	local result = "W"
+	local resultnum = 0
+	
+	for i,v in pairs(lastdash) do
+		if v > resultnum then
+			result = i
+			resultnum = v
+		end
+	end
+	
+	return result
+end
+
+local function dash(direction)
+	local hitbox
+	if check() == "W" then
+		task.delay(.23,function()
+			hitbox = much.CreateHitbox()
+			hitbox.Size = Vector3.new(4,10,6)
+			hitbox.CFrame = chr.HumanoidRootPart.CFrame * CFrame.new(0,0,-3.5)
+
+			hitbox.Touched:Connect(function(hit, hum)
+				if hum.Parent ~= chr then
+					game.ReplicatedStorage.Remotes.Attack:FireServer(chr,"Dash","AS",true,hum.Parent)
+				end
+			end)
+
+			hitbox:Start()
+			task.delay(.05,function()
+				hitbox:Stop()
+			end)
+		end)
+	end
+	
+	local a = 0
+	
+	local ae = game:GetService("RunService").Heartbeat:Connect(function()
+		a+=1
+		if check() == "S" then
+			chr.HumanoidRootPart.CFrame = chr.HumanoidRootPart.CFrame * direction * CFrame.new(0,0,1)
+		else
+			chr.HumanoidRootPart.CFrame = chr.HumanoidRootPart.CFrame * direction
+		end
+		if a == 2 then
+			a = 0
+			game.ReplicatedStorage.Remotes.Attack:FireServer(chr,"Dash",check(),false,workspace.Part,true,check())
+		end
+		if hitbox ~= nil then
+			hitbox.CFrame = chr.HumanoidRootPart.CFrame * CFrame.new(0,0,-3.5)
+		end
+	end)
+	
+	task.delay(.25,function()
+		ae:Disconnect()
+	end)
+end
+
+game:GetService("UserInputService").InputBegan:Connect(function(inp,g)
+	if not g then
+		if inp.KeyCode == Enum.KeyCode.Q then
+			if cd == false and chr:GetAttribute("Stun") == 0 then
+				cd = true
+				game.ReplicatedStorage.Remotes.Attack:FireServer(chr,"Dash",check())
+				if check() == "W" then
+					anims[1]:Play()
+					dash(CFrame.new(0,0,-speed))
+					task.delay(3,function()
+						cd = false
+					end)
+				elseif check() == "A" then
+					task.delay(1,function()
+						cd = false
+					end)
+					anims[3]:Play()
+					dash(CFrame.new(-speed,0,0))
+				elseif check() == "S" then
+					task.delay(3,function()
+						cd = false
+					end)
+					anims[2]:Play()
+					dash(CFrame.new(0,0,speed))
+				elseif check() == "D" then
+					task.delay(1,function()
+						cd = false
+					end)
+					anims[4]:Play()
+					dash(CFrame.new(speed,0,0))
+				end
+			end
+		elseif inp.KeyCode == Enum.KeyCode.W then
+			lastest+=1
+			lastdash.W = lastest + 1
+		elseif inp.KeyCode == Enum.KeyCode.A then
+			lastest+=1
+			lastdash.A = lastest + 1
+		elseif inp.KeyCode == Enum.KeyCode.S then
+			lastest+=1
+			lastdash.S = lastest + 1
+		elseif inp.KeyCode == Enum.KeyCode.D then
+			lastest+=1
+			lastdash.D = lastest + 1
+		end
+	end
+end)
+
+game:GetService("UserInputService").InputEnded:Connect(function(inp,g)
+	if not g then
+		if inp.KeyCode == Enum.KeyCode.W then
+			lastdash.W = 0
+		elseif inp.KeyCode == Enum.KeyCode.A then
+			lastdash.A = 0
+		elseif inp.KeyCode == Enum.KeyCode.S then
+			lastdash.S = 0
+		elseif inp.KeyCode == Enum.KeyCode.D then
+			lastdash.D = 0
+		end
+	end
+end)
