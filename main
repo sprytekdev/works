@@ -1,0 +1,54 @@
+local cs = game:GetService("CollectionService")
+
+local atts = {
+	["Stun"] = 0;
+	["Poisoned"] = 0;
+	["OnFire"] = 0;
+	["FinalAttacked"] = "";
+	["IFrames"] = 0;
+	["Dashing"] = 0;
+	["Running"] = 0;
+	["Character"] = "CTR";
+	["Defense"] = 1;
+	["DmgMultiplier"] = 1;
+	["CurrentM1"] = 0;
+	["Awakened"] = 0;
+	["AwakeningBar"] = 0;
+	["Using"] = 0;
+	["Ragdoll"] = 0;
+}
+
+for i,v in pairs(cs:GetTagged("Dummy")) do
+	for j,k in pairs(atts) do
+		v:SetAttribute(j,k)
+	end
+end
+
+game.Players.PlayerAdded:Connect(function(plr)
+	plr.CharacterAdded:Connect(function(q)
+		local chr = q or plr.CharacterAdded:Wait()
+		for i,v in pairs(atts) do
+			chr:SetAttribute(i,v)
+		end
+		
+		chr.AttributeChanged:Connect(function(name)
+			if name == "Ragdoll" then
+				if chr:GetAttribute("Ragdoll") > 0 then
+					chr:SetAttribute("Stun",chr:GetAttribute("Stun") + 1)
+					cs:AddTag(chr,"Ragdoll")
+				else
+					chr:SetAttribute("Stun",chr:GetAttribute("Stun") - 1)
+					cs:RemoveTag(chr,"Ragdoll")
+				end
+			elseif name == "Stun" then
+				if chr:GetAttribute("Stun") > 0 then
+					chr.Humanoid.WalkSpeed = 3
+					chr.Humanoid.JumpPower = 0
+				else
+					chr.Humanoid.WalkSpeed = 16
+					chr.Humanoid.JumpPower = 50
+				end
+			end
+		end)
+	end)
+end)
