@@ -1,3 +1,5 @@
+-- i use user input service to record what the last pressed key was from WASD and then based on that decide the dash direction and i use runservice to move the player.
+
 local lastest = 0
 
 local lastdash = {
