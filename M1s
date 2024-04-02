@@ -1,3 +1,5 @@
+-- i use runservice to make the m1s holdable playing the string, clicking is also an option here. it plays an animation string from the array "anims" up to 4 m1s, the last knocksback and deals more damage or if in the air it does a downslam with a crater effect and holding space whilst being on the ground grants an uppercut.
+
 local plr = game.Players.LocalPlayer
 local speed = 1.5
 local chr = plr.Character or plr.CharacterAdded:Wait()
