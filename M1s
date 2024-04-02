@@ -1,0 +1,173 @@
+local plr = game.Players.LocalPlayer
+local speed = 1.5
+local chr = plr.Character or plr.CharacterAdded:Wait()
+local much = require(game.ReplicatedStorage.Modules.MuchachoHitbox)
+local rs = game:GetService("ReplicatedStorage")
+local holdingspace = 0
+
+local cd = 0
+
+local function ray(Position)
+	local rayOrigin = Position
+	local rayDirection = Vector3.new(0, -3, 0)
+
+	local raycastParams = RaycastParams.new()
+	raycastParams.FilterDescendantsInstances = {workspace.Main.Map}
+	raycastParams.FilterType = Enum.RaycastFilterType.Include
+	raycastParams.IgnoreWater = true
+
+
+	local raycastResult = workspace:Raycast(rayOrigin, rayDirection,raycastParams)
+
+	if raycastResult then
+		return raycastResult
+	else
+		warn("No raycast result!")
+	end
+end
+
+local anims = {
+	chr.Humanoid.Animator:LoadAnimation(rs.Assets.Animations.Main.BasicM1s["1"]); 
+	chr.Humanoid.Animator:LoadAnimation(rs.Assets.Animations.Main.BasicM1s["2"]); 
+	chr.Humanoid.Animator:LoadAnimation(rs.Assets.Animations.Main.BasicM1s["3"]); 
+	chr.Humanoid.Animator:LoadAnimation(rs.Assets.Animations.Main.BasicM1s["4"]); 
+	chr.Humanoid.Animator:LoadAnimation(rs.Assets.Animations.Main.DownSlam); 
+	chr.Humanoid.Animator:LoadAnimation(rs.Assets.Animations.Main.UpperCut); 
+}
+
+local cds = {
+	.6;
+	.6;
+	.6;
+	3;
+}
+
+local resettime = 1
+
+local ae
+
+game:GetService("UserInputService").InputBegan:Connect(function(inp,g)
+	if not g  then
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+			if chr:GetAttribute("Using") <= 0 then
+				ae = game:GetService("RunService").Heartbeat:Connect(function()
+					if cd == 0 then
+						cd += 1
+						print(chr:GetAttribute("CurrentM1"))
+						chr:SetAttribute("CurrentM1",chr:GetAttribute("CurrentM1")+1)
+
+						local record = chr:GetAttribute("CurrentM1")
+
+						task.delay(cds[chr:GetAttribute("CurrentM1")],function()
+							if chr:GetAttribute("CurrentM1") == 4 then
+								chr:SetAttribute("CurrentM1",0)
+							end
+							cd -= 1
+						end)
+
+						if chr:GetAttribute("CurrentM1") < 4 then
+							anims[chr:GetAttribute("CurrentM1")]:Play()
+
+							local hitbox = much.CreateHitbox()
+							hitbox.Size = Vector3.new(4,10,6)
+							hitbox.CFrame = chr.HumanoidRootPart.CFrame * CFrame.new(0,0,-3.5)
+
+							hitbox.Touched:Connect(function(hit, hum)
+								if hum.Parent ~= chr then
+									game.ReplicatedStorage.Remotes.Attack:FireServer(chr,"M1",chr:GetAttribute("CurrentM1"),hum.Parent)
+								end
+							end)
+
+							hitbox:Start()
+							task.delay(.05,function()
+								hitbox:Stop()
+							end)
+						else
+							if ray(chr.HumanoidRootPart.Position) == nil then
+
+								anims[5]:Play()
+
+								game.ReplicatedStorage.Remotes.Attack:FireServer(chr,"idk")
+
+								local hitbox = much.CreateHitbox()
+								hitbox.Size = Vector3.new(4,15,7)
+								hitbox.CFrame = chr.HumanoidRootPart.CFrame * CFrame.new(0,0,-3.5)
+
+								hitbox.Touched:Connect(function(hit, hum)
+									if hum.Parent ~= chr then
+										game.ReplicatedStorage.Remotes.Attack:FireServer(chr,"M1",chr:GetAttribute("CurrentM1"),hum.Parent,holdingspace)
+									end
+								end)
+
+								hitbox:Start()
+								task.delay(.05,function()
+									hitbox:Stop()
+								end)
+							else
+								if holdingspace == 0 then
+									anims[chr:GetAttribute("CurrentM1")]:Play()
+
+									local hitbox = much.CreateHitbox()
+									hitbox.Size = Vector3.new(4,10,6)
+									hitbox.CFrame = chr.HumanoidRootPart.CFrame * CFrame.new(0,0,-3.5)
+
+									hitbox.Touched:Connect(function(hit, hum)
+										if hum.Parent ~= chr then
+											game.ReplicatedStorage.Remotes.Attack:FireServer(chr,"M1",chr:GetAttribute("CurrentM1"),hum.Parent,holdingspace)
+										end
+									end)
+
+									hitbox:Start()
+									task.delay(.05,function()
+										hitbox:Stop()
+									end)
+								else
+									anims[6]:Play()
+
+									local hitbox = much.CreateHitbox()
+									hitbox.Size = Vector3.new(4,15,7)
+									hitbox.CFrame = chr.HumanoidRootPart.CFrame * CFrame.new(0,0,-4)
+
+									hitbox.Touched:Connect(function(hit, hum)
+										if hum.Parent ~= chr then
+											game.ReplicatedStorage.Remotes.Attack:FireServer(chr,"M1",chr:GetAttribute("CurrentM1"),hum.Parent,holdingspace)
+										end
+									end)
+
+									hitbox:Start()
+									task.delay(.05,function()
+										hitbox:Stop()
+									end)
+								end
+							end
+						end
+
+						task.delay(1,function()
+							if record == chr:GetAttribute("CurrentM1") then
+								print("too slow")
+								chr:SetAttribute("CurrentM1",0)
+								cd += 1
+								task.delay(cds[4],function()
+									print("OFf Slow")
+									cd -= 1
+								end)
+							end
+						end)
+					end
+				end)
+			end
+		elseif inp.KeyCode == Enum.KeyCode.Space then
+			holdingspace +=1
+		end
+	end
+end)
+
+game:GetService("UserInputService").InputEnded:Connect(function(inp,g)
+	if not g  then
+		if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+			ae:Disconnect()
+		elseif inp.KeyCode == Enum.KeyCode.Space then
+			holdingspace -=1
+		end
+	end
+end)
